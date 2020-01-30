@@ -8,8 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -27,18 +29,31 @@ public class RegistrationController {
     }
 
     @PostMapping("/registration")
-    public String addUser(User user, Map<String, Object> model) {
+    public String addUser(@Valid User user, BindingResult bindingResult, Model model) {
+        if(!Objects.equals(user.getPassword(), user.getPassword2())) {
+            model.addAttribute("passwordError", "Passwords are different");
+        }
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = ControllerUtils.getErrors(bindingResult);
+            model.mergeAttributes(errors);
+        }
+        for (String key : model.asMap().keySet()) {
+            if (key.contains("Error")) {
+                return "registration";
+            }
+        }
+
         if (!StringUtils.isEmpty(user.getUsername()) && !StringUtils.isEmpty(user.getPassword())) {
 
             if (!userService.addUser(user)) {
-                model.put("message", "User already exists.");
+                model.addAttribute("usernameError", "User already exists.");
                 return "registration";
             }
 
             return "redirect:/login";
         }
 
-        model.put("message", "Fill in all the fields.");
+        model.addAttribute("message", "Fill in all the fields.");
         return "registration";
     }
 

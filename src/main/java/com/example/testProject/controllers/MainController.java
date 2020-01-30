@@ -8,16 +8,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 public class MainController {
@@ -49,17 +54,18 @@ public class MainController {
 
     @PostMapping("/main")
     public String addBookmark(@AuthenticationPrincipal User user,
-                              @RequestParam String link,
-                              @RequestParam String text,
-                              @RequestParam MultipartFile file,
-                              Map<String, Object> model) throws IOException {
+                              @Valid Bookmark bookmark,
+                              BindingResult bindingResult,
+                              Model model,
+                              @RequestParam MultipartFile file) throws IOException {
+        bookmark.setAuthor(user);
 
-        if (Objects.nonNull(link) && !link.isEmpty() ||
-                Objects.nonNull(text) && !text.isEmpty() ||
-                Objects.nonNull(file) && !file.isEmpty()) {
-            Bookmark bookmark = new Bookmark(link, text, user);
-
-            if (file != null && !file.isEmpty()) {
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errorsMap = ControllerUtils.getErrors(bindingResult);
+            model.mergeAttributes(errorsMap);
+            model.addAttribute("message", bookmark);
+        } else {
+            if (Objects.nonNull(file) && !file.isEmpty()) {
                 File uploadDir = new File(uploadPath);
                 if (!uploadDir.exists()) {
                     uploadDir.mkdir();
@@ -68,10 +74,11 @@ public class MainController {
                 file.transferTo(new File(uploadPath + "/" + resultFileName));
                 bookmark.setFileName(resultFileName);
             }
+            model.addAttribute("message", null);
             bookmarkRepo.save(bookmark);
         }
         Iterable<Bookmark> bookmarks = bookmarkRepo.findAll();
-        model.put("bookmarks", bookmarks);
+        model.addAttribute("bookmarks", bookmarks);
 
         return "main";
     }

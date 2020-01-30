@@ -12,14 +12,17 @@
   <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
     Add new bookmark
   </a>
-<div class="collapse" id="collapseExample">
+<div class="collapse <#if message??>show</#if>" id="collapseExample">
     <div class="form-group mt-3">
-        <form method="post" enctype="multipart/form-data" target="_blank">
+        <form method="post" enctype="multipart/form-data">
             <div class="form-group">
-                <input type="text" class="form-control" name="link" placeholder="Введите ссылку, ктр хотите сохранить."/>
-            </div>
-            <div class="form-group">
-                <input type="text" class="form-control" name="text" placeholder="Введите напоминание."/>
+                <input type="text" class="form-control ${(textError??)?string('is-invalid', '')}"
+                value = "<#if message??> ${message.text} </#if>" name="text" placeholder="Введите напоминание."/>
+                <#if textError??>
+                    <div class="invalid-feedback">
+                      ${textError}
+                    </div>
+                </#if>
             </div>
             <div class="form-group">
                 <div class="custom-file">
@@ -42,7 +45,6 @@
     <div class="card my-3">
 
         <div class="m-2">
-            <span>${bookmark.link}</span><br/>
             <i>${bookmark.text}</i>
             <div>
                 <#if bookmark.fileName??>
@@ -53,8 +55,6 @@
 
         <div class="card-footer text-muted">${bookmark.authorName}</div>
     </div>
-
-
 
     <#else>
     No bookmarks

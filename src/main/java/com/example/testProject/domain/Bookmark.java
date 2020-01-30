@@ -1,9 +1,11 @@
 package com.example.testProject.domain;
 
 import lombok.*;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -17,7 +19,9 @@ public class Bookmark {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String link;
+
+    @NotBlank(message = "Please fill the bookmark text")
+    @Length(max = 2048, message = "Text larger than 2048 characters.")
     private String text;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -26,8 +30,7 @@ public class Bookmark {
 
     private String fileName;
 
-    public Bookmark(String link, String text, User author) {
-        this.link = link;
+    public Bookmark(String text, User author) {
         this.text = text;
         this.author = author;
     }
